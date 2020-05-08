@@ -129,7 +129,7 @@ def _validate_choices(options):
     return func
 
 
-def set_layout_hook(session, hook_name):
+def set_layout_hook(session, hook_name, working_dir=None):
     """Set layout hooks to normalize layout.
 
     References:
@@ -179,6 +179,8 @@ def set_layout_hook(session, hook_name):
         )
     )
     hook_cmd.append('selectw -t {}'.format(attached_window.id))
+    if working_dir:
+        hook_cmd.append('attach-session -c {}'.format(working_dir))
 
     # join the hook's commands with semicolons
     hook_cmd = '{}'.format('; '.join(hook_cmd))
@@ -551,14 +553,22 @@ def load_workspace(
                 return builder.session
             else:  # session created in the background, from within tmux
                 if has_gte_version('2.6'):  # prepare for both cases
-                    set_layout_hook(builder.session, 'client-attached')
+                    set_layout_hook(
+                        builder.session,
+                        'client-attached',
+                        working_dir=builder.sconf.get('working_directory')
+                    )
                     set_layout_hook(builder.session, 'client-session-changed')
 
                 sys.exit('Session created in detached state.')
         else:  # tmuxp ran from inside tmux
             if has_gte_version('2.6'):
                 # if attaching for first time
-                set_layout_hook(builder.session, 'client-attached')
+                set_layout_hook(
+                    builder.session,
+                    'client-attached',
+                    working_dir=builder.sconf.get('working_directory')
+                )
 
                 # for cases where user switches client for first time
                 set_layout_hook(builder.session, 'client-session-changed')
